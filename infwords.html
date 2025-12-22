@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Term Master Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --accent: #38bdf8;
+            --card-bg: #1e293b;
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f1f5f9;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        @media (max-width: 640px) {
+            body { overflow-y: auto; height: auto; }
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .progress-circle {
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .active-press:active { transform: scale(0.98); }
+
+        .scrollable-list {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8 text-slate-100 flex flex-col">
+    <div id="app" class="max-w-5xl mx-auto w-full flex-grow flex flex-col">
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 flex-shrink-0">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-sky-400">TermMaster<span class="text-white">Pro</span></h1>
+            </div>
+            <nav class="flex gap-4 bg-slate-800/50 p-1.5 rounded-full px-5 border border-white/5">
+                <button onclick="changeView('dashboard')" class="text-xs hover:text-sky-400 transition font-medium py-1">Home</button>
+                <button onclick="changeView('quiz-select')" class="text-xs hover:text-sky-400 transition font-medium py-1 text-sky-300">Quiz</button>
+                <button onclick="changeView('list')" class="text-xs hover:text-sky-400 transition font-medium py-1">Dictionary</button>
+            </nav>
+        </header>
+
+        <!-- View: Dashboard -->
+        <main id="view-dashboard" class="view flex-grow">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                <div class="glass-card p-6 rounded-3xl flex flex-col items-center justify-center">
+                    <h3 class="text-slate-400 mb-4 uppercase text-[10px] tracking-widest font-bold">Encounters</h3>
+                    <div class="relative w-28 h-28 md:w-32 md:h-32">
+                        <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                            <circle class="stroke-slate-800" stroke-width="3" fill="none" r="16" cx="18" cy="18" />
+                            <circle id="circle-encounter" class="stroke-sky-500 progress-circle" stroke-width="3" stroke-dasharray="0, 100" stroke-linecap="round" fill="none" r="16" cx="18" cy="18" />
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span id="stat-encounter-pct" class="text-2xl font-bold font-mono text-white">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-3xl flex flex-col items-center justify-center">
+                    <h3 class="text-slate-400 mb-4 uppercase text-[10px] tracking-widest font-bold">Mastery</h3>
+                    <div class="relative w-28 h-28 md:w-32 md:h-32">
+                        <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                            <circle class="stroke-slate-800" stroke-width="3" fill="none" r="16" cx="18" cy="18" />
+                            <circle id="circle-mastery" class="stroke-emerald-500 progress-circle" stroke-width="3" stroke-dasharray="0, 100" stroke-linecap="round" fill="none" r="16" cx="18" cy="18" />
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span id="stat-mastery-pct" class="text-2xl font-bold font-mono text-white">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <button onclick="changeView('quiz-select')" class="bg-sky-500 hover:bg-sky-400 active-press text-white px-10 py-3 rounded-2xl font-bold transition-all shadow-xl shadow-sky-500/20">
+                    クイズを開始する
+                </button>
+            </div>
+        </main>
+
+        <!-- View: Quiz Selection -->
+        <main id="view-quiz-select" class="view hidden fade-in flex-grow">
+            <h2 class="text-xl font-bold mb-6 text-center text-white">学習モードを選択</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+                <button onclick="startQuiz('term-to-meaning')" class="glass-card p-6 rounded-2xl hover:bg-slate-800 transition-all text-left active-press">
+                    <div class="text-lg font-bold mb-2">用語 → 意味</div>
+                    <p class="text-slate-400 text-xs">定義の暗記に最適。</p>
+                </button>
+                <button onclick="startQuiz('meaning-to-term')" class="glass-card p-6 rounded-2xl hover:bg-slate-800 transition-all text-left active-press">
+                    <div class="text-lg font-bold mb-2">意味 → 用語</div>
+                    <p class="text-slate-400 text-xs">想起力を鍛えます。</p>
+                </button>
+                <button onclick="startQuiz('review')" class="glass-card p-6 rounded-2xl hover:bg-rose-500/10 border-rose-500/20 transition-all text-left active-press">
+                    <div class="text-lg font-bold mb-2 text-rose-300">苦手克服</div>
+                    <p class="text-slate-400 text-xs">誤答した用語を優先。</p>
+                </button>
+            </div>
+        </main>
+
+        <!-- View: Quiz Active -->
+        <main id="view-quiz-active" class="view hidden fade-in flex-grow flex flex-col justify-center">
+            <div class="max-w-2xl mx-auto w-full">
+                <div class="flex justify-between items-center mb-4">
+                    <span id="quiz-progress-text" class="bg-slate-800/80 px-3 py-1 rounded-full text-slate-300 text-[10px] font-mono border border-white/5 uppercase">Q 1 / 5</span>
+                    <button onclick="changeView('dashboard')" class="text-slate-500 hover:text-white text-xs">中断</button>
+                </div>
+                
+                <div class="glass-card p-6 md:p-10 rounded-[2rem] mb-6 min-h-[8rem] flex items-center justify-center shadow-xl">
+                    <div id="quiz-question" class="text-lg md:text-xl font-bold text-center leading-snug text-slate-100">
+                        Loading...
+                    </div>
+                </div>
+
+                <div id="quiz-options" class="grid grid-cols-1 gap-3">
+                    <!-- Options -->
+                </div>
+
+                <div id="quiz-feedback" class="mt-6 text-center hidden">
+                    <div id="feedback-message" class="text-lg font-bold mb-4"></div>
+                    <button onclick="nextQuestion()" class="w-full sm:w-auto bg-white text-slate-900 px-10 py-2.5 rounded-xl font-bold hover:bg-slate-200 active-press">次へ</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- View: List -->
+        <main id="view-list" class="view hidden fade-in flex-grow flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">用語一覧</h2>
+                <div class="text-[10px] text-slate-500 uppercase">Total: <span id="list-total-count" class="text-white">0</span></div>
+            </div>
+            
+            <div class="scrollable-list glass-card rounded-2xl border border-white/5">
+                <div class="hidden sm:block">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="sticky top-0 bg-slate-900 z-10">
+                            <tr class="text-slate-500 uppercase text-[9px] tracking-widest font-bold border-b border-slate-800">
+                                <th class="py-3 px-4">用語</th>
+                                <th class="py-3 px-4">意味</th>
+                                <th class="py-3 px-4 text-center">結果</th>
+                                <th class="py-3 px-4 text-right">状態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="list-table-body" class="divide-y divide-slate-800"></tbody>
+                    </table>
+                </div>
+                <div id="list-mobile-container" class="sm:hidden p-4 space-y-4"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const initialTerms = [
+            { id: 1, term: "1次元配列|一次元配列", meaning: "1次元的に値が並んでいる配列" },
+{ id: 2, term: "1次情報|一次情報", meaning: "起きたところから直接入手した情報　" },
+{ id: 3, term: "1対1", meaning: "一人が一人に向けて伝えること" },
+{ id: 4, term: "2段階認証|二段階認証", meaning: "認証を二段階異なる手段で行うこと" },
+{ id: 5, term: "2分探索|二分探索|二分探索法|二分法探索", meaning: "整列済の表で中央項目との大・小・一致を見、一致でない時適切な側の半分に同様に繰り返す探索方法" },
+{ id: 6, term: "3Dプリンタ|3Dプリンター", meaning: "3次元の立体を作り出せるプリンタ" },
+{ id: 7, term: "5大機能|5大装置|5大要素|コンピュータの五大機能|コンピュータの五大要素|五大機能|五大機能（五大装置）|五大装置", meaning: "コンピュータの主要機能である、演算・制御・記憶・入力・出力のこと" },
+{ id: 8, term: "AI|人工知能", meaning: "人間の脳で行っているような作業をコンピューターにさせること" },
+{ id: 9, term: "Algorithm|アルゴリズム", meaning: "問題を解決するための手順ないし計算方法" },
+{ id: 10, term: "AND検索", meaning: "複数の条件の「かつ」を取る検索" },
+{ id: 11, term: "AND検索", meaning: "複数の条件の「かつ」を取る検索" },
+{ id: 12, term: "ANSI", meaning: "米国国家規格協会" },
+{ id: 13, term: "AR|AR技術（拡張現実）|拡張現実", meaning: "現実世界を立体的に読み取り、仮想的に拡張する技術" },
+{ id: 14, term: "ARPANET|ARPAネットワーク", meaning: "インターネットのもとになった、世界最初のパケット交換方式ネットワーク" },
+{ id: 15, term: "BBS|BBS（Bulletin Board System）|電子掲示板", meaning: "画面上でまとまった文章などを書き込んでコミュニケーションするもの" },
+{ id: 16, term: "bit|ビット", meaning: "0か1か、のように2つのうちどちらかの情報。デジタルデータの最小単位" },
+{ id: 17, term: "blog|ブログ", meaning: "発信者がまとまった記事を書き込み、読者が付属した掲示板で反応を返すもの" },
+{ id: 18, term: "Bluetooth", meaning: "近距離での無線通信を行うための規格の1つ" },
+{ id: 19, term: "bps", meaning: "bits per second、ネット回線などで1秒間に何ビットを動かせるか(速さ)の単位" },
+{ id: 20, term: "CCライセンス|クリエイティブコモンズ|クリエイティブコモンズライセンス|クリエイティブ・コモンズ|クリエイティブ・コモンズ・ライセンス", meaning: "クリエイティブ・コモンズ活動が推奨する、6つの著作権表明のかたち" },
+{ id: 21, term: "CMY", meaning: "シアン・マゼンタ・イエローの3原色" },
+{ id: 22, term: "Cookie|クッキー|クッキー（Cookie）", meaning: "サーバがサイトに付随してブラウザに覚えさせ、おなじサイトのページを読むと取り出せるデータ" },
+{ id: 23, term: "CPU|CPU（Central Processing Unit）|Central Processing Unit|中央処理装置|中央演算処理ユニット|中央演算処理装置", meaning: "コンピュータの中枢部分で、演算とプログラム実行を司る" },
+{ id: 24, term: "D-A変換|D/A|D/A変換|DA変換|DA（Digital to Analog）変換|ディジタル-アナログ変換|ディジタル/アナログ変換", meaning: "デジタル情報をアナログ情報に変換すること" },
+{ id: 25, term: "DNS|Domain Name System|ドメイン名システム", meaning: "TCP/IPで、ドメイン名とIPアドレスの対応を司るシステム" },
+{ id: 26, term: "DTP", meaning: "デスクトップパブリッシング、印刷物の編集やデザインをコンピュータ上で行うこと" },
+{ id: 27, term: "E-mail|E-メール|Eメール|e-mail|インターネットメール|メール|電子メール", meaning: "ネット上で手紙のようにメッセージをやりとりするシステム" },
+{ id: 28, term: "EOR回路|XORゲート|XOR回路|排他的論理和ゲート|排他的論理和回路", meaning: "2つの入力のちょうど1つだけが「1」のときのみ「1」を出力するゲート" },
+{ id: 29, term: "FTTH", meaning: "Fiber To The Home。電話局から家庭の宅内まで光ファイバーで接続される方式" },
+{ id: 30, term: "GB|GByte|GB（ギガバイト）", meaning: "1000MBまたは1024MB" },
+{ id: 31, term: "GIF|Graphic Interchange Format|gif", meaning: "GIF形式は古くからある画像形式。色数最大256色、損失のない圧縮" },
+{ id: 32, term: "GUI|GUI（Graphical User Interface）|Graphical User Interface|グラフィカルユーザインタフェース|グラフィカルユーザインターフェース|グラフィカルユーザーインターフェース", meaning: "グラフィクスとポインティグデバイス(マウス等)を用いたUI" },
+{ id: 33, term: "H.264", meaning: "広く使われている動画コーデックの1つ" },
+{ id: 34, term: "HTML|HTML（Hypertext Markup Language）|Hypertext Markup Language|htm|html", meaning: "Webページのコンテンツを記述するマークアップ言語" },
+{ id: 35, term: "HTTPS|https", meaning: "HTTPのかわりにHTTPSとすると、ブラウザがTLSを使うようになる" },
+{ id: 36, term: "ICT|情報通信技術", meaning: "情報および通信の技術" },
+{ id: 37, term: "IEEE 802.11|IEEE802.11", meaning: "IEEEが定めている無線LANの標準規格" },
+{ id: 38, term: "Internet|インターネット", meaning: "IPを用いて情報を流通させる世界にまたがるネットワーク" },
+{ id: 39, term: "IP version 6|IPv6", meaning: "IPの新しいバージョンで128ビットのアドレスを用いる" },
+{ id: 40, term: "IPv4", meaning: "IPの古くからあるバージョンで32ビットのアドレスを用いる" },
+{ id: 41, term: "IPアドレス|IPアドレス（Internet Protocol address）|IP（Internet Protocol）アドレス", meaning: "IPが使用する32ビット(IPv6では128ビット)のアドレス" },
+{ id: 42, term: "ISP|Internet Service Provider|インターネットサービスプロバイダ|インターネット・サービス・プロバイダ|プロバイダ", meaning: "学校、家庭、企業などのLANをインターネットに繋いでくれる事業者" },
+{ id: 43, term: "IT|情報技術", meaning: "情報の技術" },
+{ id: 44, term: "KJ法", meaning: "アイデアをまとめる手法で、キーワードなどを紙に書いて配置してゆく" },
+{ id: 45, term: "LAN|LAN（Local Area Network）|Local Area Network|ローカルエリアネットワーク|ローカルネットワーク|ローカル・エリア・ネットワーク", meaning: "局所的な範囲でつながっているネットワーク" },
+{ id: 46, term: "MB|MByte|MB（メガバイト）", meaning: "1000KBまたは1024KB" },
+{ id: 47, term: "MECE", meaning: "Mutually Exclusive、Collectively Exhaustive。重複せず漏れが無いように分解してゆくこと" },
+{ id: 48, term: "MOOC|MOOCs", meaning: "Massive Open Online Courses、オンラインで海外や遠方の教育機関が提供する講座を受講できる仕組み" },
+{ id: 49, term: "MP3|MP3形式|MPEG Audio Layer-3|mp3|MP3（MPEG Audio Layer-3）", meaning: "広く普及している音声圧縮方式および形式の1つ" },
+{ id: 50, term: "NOT|not|論理否定", meaning: "NOT(〜でない)演算" },
+{ id: 51, term: "OSI参照モデル", meaning: "ISOが定めたネットワークの機能を7階層に分けて整理したモデル" },
+{ id: 52, term: "PCM方式|パルス符号変調方式", meaning: "アナログ信号を一定周期で標本化・量子化してデジタル化する方式" },
+{ id: 53, term: "POP", meaning: "受け取ったメールをダウンロードさせてくれるプロトコル" },
+{ id: 54, term: "POS|POSシステム|POS（Point Of Sales）|Point Of Sales|販売時点情報管理システム|販売時点管理システム", meaning: "販売時点情報管理システム。販売時点で売れた商品や金額等を記録し在庫管理等に役立てる" },
+{ id: 55, term: "Python", meaning: "統計や数値計算などのライブラリを多く持ち広く使われるプログラミング言語" },
+{ id: 56, term: "Shift JIS|ShiftJIS|Shift_JIS|Shift_JISコード|シフトJIS|シフトJISコード", meaning: "ASCII文字と8ビットおよび16ビットのJISコードの文字を共存させたコード体系" },
+{ id: 57, term: "SI接頭語|SI接頭辞", meaning: "国際単位系において規定されている、単位の倍量・分量を10進数で表す接頭語" },
+{ id: 58, term: "SNS|ソーシャルネットワーキングサービス", meaning: "Web上で社会的ネットワーク(ソーシャルネットワーク)を構築可能にするサービス" },
+{ id: 59, term: "Society5.0|Society 5.0", meaning: "AIやロボット等を活用して、人間がより便利で快適に生活を送ることができる社会" },
+{ id: 60, term: "SSL|SSL（Secure Socket Layer）", meaning: "Secure Sockets Layer、Webのブラウザとサーバの間の通信を暗号化するプロトコルの旧版" },
+{ id: 61, term: "STDEV.P|STDEV.P関数", meaning: "標準偏差を計算する表計算関数" },
+{ id: 62, term: "TB|TB（テラバイト）|テラバイト", meaning: "1000GBまたは1024GB" },
+{ id: 63, term: "TCP/IP|TCP/IPプロトコル", meaning: "インターネットで使われる通信プロトコルの総称" },
+{ id: 64, term: "TCP|TCP（Transmission Control Protocol）|Transmission Control Protocol", meaning: "TCP/IPのトランスポート層プロトコルの一つで、仮想回線を提供する" },
+{ id: 65, term: "t検定", meaning: "t分布を利用する検定法の総称で、母集団の分散が不明でも使える" },
+{ id: 66, term: "UD|ユニバーサルデザイン", meaning: "文化や年齢・性別・能力、障害の有無などに関わらず、出来る限り幅広い人々に適応すること" },
+{ id: 67, term: "UD|ユニバーサルデザイン", meaning: "文化や年齢・性別・能力、障害の有無などに関わらず、出来る限り幅広い人々に適応すること" },
+{ id: 68, term: "UDフォント|ユニバーサルデザインフォント", meaning: "出来る限り幅広い人々に適応することを目標にデザインされたフォント" },
+{ id: 69, term: "UDフォント|ユニバーサルデザインフォント", meaning: "出来る限り幅広い人々に適応することを目標にデザインされたフォント" },
+{ id: 70, term: "UDフォント|ユニバーサルデザインフォント", meaning: "出来る限り幅広い人々に適応することを目標にデザインされたフォント" },
+{ id: 71, term: "UI|User Interface|ユーザインタフェース|ユーザインターフェース|ユーザ・インタフェース|ユーザーインターフェース", meaning: "システムと利用者の接する部分(のでき方)" },
+{ id: 72, term: "UNICODE|UNICODE（ユニコード）|Unicode|unicode|ユニコード", meaning: "世界の多くの文字をまとめて含むコード体系" },
+{ id: 73, term: "URL|URL（Uniform Resource Locator）|Uniform Resource Locator", meaning: "WWW上のページ等に対応するアドレス" },
+{ id: 74, term: "VAR.P|VAR.P関数", meaning: "分散を計算する表計算関数" },
+{ id: 75, term: "VPN", meaning: "Virtual Private Network。仮想専用線。通信の安全性を高められる" },
+{ id: 76, term: "Webセーフカラー", meaning: "ブラウザや OS の種類に関係なくWeb ページで常に表示できる 216 色" },
+{ id: 77, term: "Webページ|ウェブページ", meaning: "WebのコンテンツとなるHTMLで記述されたページ" },
+{ id: 78, term: "Webメール|ウェブメール", meaning: "Webアプリとして電子メールのクライアント(メールソフト)を実現したもの" },
+{ id: 79, term: "ZIP|ZIP形式", meaning: "1つまたは複数のファイルをまとめて圧縮した形式" },
+{ id: 80, term: "アイコン", meaning: "ファイルの種類やプログラム等を小さな絵記号にして表示したもの" },
+{ id: 81, term: "アカウント", meaning: "PCなどを使用する個人に対応した単位。元はコンピュータの利用記録を取ったことからきた" },
+{ id: 82, term: "アクセシビリティ", meaning: "アクセスのしやすさ、製品やサービスの利用しやすさ" },
+{ id: 83, term: "アクセスポイント", meaning: "無線LAN機器の基地局となる機器" },
+{ id: 84, term: "アクチュエータ|アクチュエーター", meaning: "動力源と機構部品を組み合わせて、機械的な動作を行う装置" },
+{ id: 85, term: "アップデート", meaning: "(1) ソフトウェアの更新" },
+{ id: 86, term: "アベレージ|平均値|平均点", meaning: "総和を総数で割った値" },
+{ id: 87, term: "暗号化", meaning: "もとの文（平文）を暗号化すること" },
+{ id: 88, term: "暗号文", meaning: "特別な知識なしでは読めないように変換したもの" },
+{ id: 89, term: "アンチウィルスソフト|アンチウイルスソフト|アンチウイルスソフトウェア|アンチウイルスプログラム|ウイルス対策ソフトウェア|ワクチンプログラム", meaning: "マルウェアの害を防ぐためのソフトウェア" },
+{ id: 90, term: "意匠権", meaning: "工業デザインを守る権利" },
+{ id: 91, term: "因果関係", meaning: "原因とそれによって生じる結果との関係" },
+{ id: 92, term: "インタビュー|インタビュー調査", meaning: "事柄についての意見や感想を対面で対象者から聞き取る調査手法" },
+{ id: 93, term: "ウィルス|ウイルス|コンピュータウィルス|コンピュータウイルス|コンピュータウイルス（ウイルス）", meaning: "他のプログラムに自分のコピーを移植することで広まるマルウェア" },
+{ id: 94, term: "打ち切り誤差", meaning: "無限級数の和の計算を途中で打ち切る結果生まれる誤差" },
+{ id: 95, term: "絵文字", meaning: "簡単な絵のような形で、文字の代わりに使われるもの" },
+{ id: 96, term: "演算子", meaning: "演算を表す記号" },
+{ id: 97, term: "演算装置", meaning: "コンピュータで演算やデータの加工を司る部分" },
+{ id: 98, term: "オブジェクト指向プログラミング", meaning: "オブジェクト(もの)の集まりとしてプログラムを作ること" },
+{ id: 99, term: "折れ線グラフ", meaning: "値の推移を頂点を互いにつなげた折線で表したグラフ" },
+{ id: 100, term: "オンラインオークション|ネットオークション|ネット・オークション", meaning: "ネットを通して行われるオークション" },
+{ id: 101, term: "解像度", meaning: "画素の細かさの度合い" },
+{ id: 102, term: "階調", meaning: "彩度・明度・色相の段階数" },
+{ id: 103, term: "顔文字", meaning: "記号や文字で作成された、感情を表す顔の表情マーク" },
+{ id: 104, term: "可逆圧縮", meaning: "圧縮したものを伸長すると元と同じになる圧縮方法" },
+{ id: 105, term: "確率モデル|確率的なモデル|確率的モデル", meaning: "ランダムな現象が含まれるなどして、確率的な結果しか求められないモデル" },
+{ id: 106, term: "仮説検定", meaning: "確率をもとに結論を導く方法" },
+{ id: 107, term: "加法混色|加色混合", meaning: "光の3原色を混ぜ合わせて色を作り出すこと" },
+{ id: 108, term: "完全性", meaning: "情報セキュリティ3要素の1つで、情報が失われたり改ざんされたりしないこと" },
+{ id: 109, term: "記憶装置", meaning: "コンピュータでデータの記憶を司る部分" },
+{ id: 110, term: "機密性", meaning: "情報セキュリティ3要素の1つで、情報が権利のない人に使われないこと" },
+{ id: 111, term: "組み込み関数", meaning: "プログラミング言語の一部として予め用意されている関数" },
+{ id: 112, term: "クライアント/サーバシステム|クライアント/サーバ・システム|クライアントサーバシステム|クライアントサーバーシステム|クライアント・サーバシステム|クライアント・サーバ・システム|クライアント／サーバ・システム", meaning: "少数のサーバが多数のクライアントに対してサービスを提供する形態のシステム" },
+{ id: 113, term: "クラッキング", meaning: "システムに不正侵入すること" },
+{ id: 114, term: "くりかえし構造|反復型構造|反復構造|繰り返し構造", meaning: "一連の動作を繰り返し実行すること" },
+{ id: 115, term: "クロスチェック|相互確認", meaning: "二つ以上の異なる方法や観点・資料などによりチェックすること" },
+{ id: 116, term: "クロック信号", meaning: "論理回路を同期して動かすための信号" },
+{ id: 117, term: "経路制御", meaning: "パケットを正しい方向に送ること" },
+{ id: 118, term: "欠損値", meaning: "特定の変数が何かしらの理由で欠落していること" },
+{ id: 119, term: "工業所有権|産業財産権", meaning: "知的財産権のうち、特許権、実用新案権、意匠権及び商標権の４つ" },
+{ id: 120, term: "構造化されていないデータ|非構造化データ", meaning: "旧来のデータベースのように構造化されていないデータ" },
+{ id: 121, term: "公表権", meaning: "著作者人格権の一つで、作品を公表するしかたを定められる権利" },
+{ id: 122, term: "コーデック", meaning: "映像や音声データをエンコード(符号化)/デコード(復号化)するプログラム" },
+{ id: 123, term: "コード体系|コード系|文字コード体系", meaning: "一群の文字に体系的に番号を割り当てたもの" },
+{ id: 124, term: "ゴシック体", meaning: "日本語の書体で、すべての画がほぼ同じ太さに見えるようデザインされたもの" },
+{ id: 125, term: "個人識別符号", meaning: "特定の個人を識別できる文字、番号、記号その他の符号" },
+{ id: 126, term: "コンピュータ|電子式コンピュータ|電子式計算機|電子計算機", meaning: "電子回路を用いてプログラムに従い演算やデータの蓄積・検索・加工など行う装置" },
+{ id: 127, term: "サービス", meaning: "要求に応じて情報やその他の利便性を提供するもの" },
+{ id: 128, term: "彩度", meaning: "色の鮮やかさの度合い" },
+{ id: 129, term: "サイバーテロ", meaning: "重要インフラ事業者のシステムがサイバー攻撃を受け、国民生活等に甚大な支障が生じること" },
+{ id: 130, term: "さくいん|インデックス|索引", meaning: "(1) 本の末尾にある語と出現ページの表 (2) 単語の辞書 (3)プログラミング言語で配列などの要素を特定する数。添字。" },
+{ id: 131, term: "サブルーチン", meaning: "手続きとも言う。コードの集まりに名前を付け、引数を渡して呼び出せるようにしたもの" },
+{ id: 132, term: "参考文献", meaning: "論文やレポートを執筆するにあたって論拠とした文献" },
+{ id: 133, term: "散布図|散布図（相関図）", meaning: "横軸と縦軸にそれぞれ別の量をとりデータが当てはまるところに点を打って示すグラフ" },
+{ id: 134, term: "サンプリング|サンプリング（標本化）", meaning: "信号の値を一定間隔で読み取ること" },
+{ id: 135, term: "色相環", meaning: "色相の異なる色を隣り合うものどうし環状に並べたもの" },
+{ id: 136, term: "シグニファイア", meaning: "人間の行動を正しく誘導するためのサイン" },
+{ id: 137, term: "指数部", meaning: "浮動小数点で、小数点をいくつずらすかの部分" },
+{ id: 138, term: "質的データ", meaning: "量的データでないデータ" },
+{ id: 139, term: "四分位数", meaning: "データを小さい順に並び替えたときに、データの数で4等分した時の区切り値のこと" },
+{ id: 140, term: "シミュレーション", meaning: "実物の代わりに模型やモデルを用いてやってみること" },
+{ id: 141, term: "射影|射影演算", meaning: "RDBにおいて1つのリレーション(表)のいくつかのフィールドを取り出す操作" },
+{ id: 142, term: "尺度水準", meaning: "データをそれが表現する情報の性質に基づき分類する基準" },
+{ id: 143, term: "周期", meaning: "波が1往復振動するのにかかる時間" },
+{ id: 144, term: "上映権", meaning: "著作権のうち、映画などを上映する権利" },
+{ id: 145, term: "状態遷移図", meaning: "システムの状態とその間の遷移について表す図法" },
+{ id: 146, term: "譲渡権", meaning: "著作権のうち、映画以外の著作物の原作品や複製物を譲渡する権利" },
+{ id: 147, term: "情報源", meaning: "情報の出どころ" },
+{ id: 148, term: "信ぴょう性|信憑性", meaning: "情報の信頼できる度合い" },
+{ id: 149, term: "数式モデル", meaning: "数式の形で表されたモデル" },
+{ id: 150, term: "図的モデル", meaning: "図の形で表されたモデル" },
+{ id: 151, term: "スライド", meaning: "プレゼンテーション用に画面やスクリーンに投影するもの" },
+{ id: 152, term: "正規化", meaning: "データのスケールを扱いやすいものに整えること" },
+{ id: 153, term: "制御", meaning: "システムやその部分を思ったように動かすこと" },
+{ id: 154, term: "セキュリティホール|セキュリティーホール", meaning: "ソフトウェアの欠陥で、悪意あるソフトウェアに利用される可能性のあるもの" },
+{ id: 155, term: "セキュリティポリシー|情報セキュリティポリシー", meaning: "企業や組織において実施する情報セキュリティ対策の方針や行動指針" },
+{ id: 156, term: "絶対参照", meaning: "現在位置に関係なくどのセルという参照方法" },
+{ id: 157, term: "選択ソート", meaning: "列の最小値を取り出し、残りからまた最小値を取り出し、を繰り返す整列方法" },
+{ id: 158, term: "相対参照", meaning: "縦又は横方向に現在位置からいくつプラス(マイナス)のセルという参照方法" },
+{ id: 159, term: "ソーシャルメディア", meaning: "社会的ネットワーク(ソーシャルネットワーク)を形成するようなメディア" },
+{ id: 160, term: "ソース|ソースコード|ソースプログラム", meaning: "人間が普通に読んだり書いたりできる形のコード(プログラムの断片)" },
+{ id: 161, term: "第3四分位数", meaning: "小さい方から75パーセントのデータを含む値" },
+{ id: 162, term: "代替テキスト", meaning: "画像のタグに指定する、画像が利用できない場合に代替として示されるべきテキスト" },
+{ id: 163, term: "代入", meaning: "変数への値の書き込み" },
+{ id: 164, term: "代表値", meaning: "データ全体の様子を一つの数値で代表させて表す値" },
+{ id: 165, term: "タスク管理", meaning: "OSの中でタスクの動作や制御を司る部分" },
+{ id: 166, term: "知的財産|無体財産", meaning: "人間の知的活動によって生み出されたアイデアや創作物で財産的な価値を持つものをを総称して言う" },
+{ id: 167, term: "知的財産権|無体財産権", meaning: "知的財産に関する権利" },
+{ id: 168, term: "抽出", meaning: "母集団から無作為に一部を選び出すこと" },
+{ id: 169, term: "著作権（財産権）", meaning: "思想又は感情を創作的に表現したものを著作物、それに関する権利を著作権という" },
+{ id: 170, term: "著作権法", meaning: "著作権について定める法律" },
+{ id: 171, term: "著作物", meaning: "著作権の保護対象。思想又は感情を創作的に表現したもの" },
+{ id: 172, term: "ディジタル化|デジタル化", meaning: "アナログ情報をデジタル情報に変換すること" },
+{ id: 173, term: "ディジタル署名|デジタル署名", meaning: "電子文書に対する本人性や非改ざん性を示す方式で、公開鍵暗号技術を用いたもの" },
+{ id: 174, term: "データクレンジング", meaning: "データの誤記や未入力・重複などの不備を修正しデータの正確性を高める作業" },
+{ id: 175, term: "データサイエンス", meaning: "統計学・機械学習・AIを活用し、予測モデルや自動化プロセスを構築こと" },
+{ id: 176, term: "データサイエンティスト", meaning: "統計学・機械学習・AIを活用し、予測モデルや自動化プロセスを構築する人" },
+{ id: 177, term: "データマイニング", meaning: "膨大なデータから知識やルールなどを発掘する技術・手法" },
+{ id: 178, term: "データモデル", meaning: "データベースが提供している構造化の枠組み" },
+{ id: 179, term: "テーブル", meaning: "レコードが1次元的に並んだ構造" },
+{ id: 180, term: "テクノストレス", meaning: "新しい技術に馴染めないことからくるストレス" },
+{ id: 181, term: "テスト", meaning: "プログラムの間違いを発見する作業" },
+{ id: 182, term: "手続き型言語", meaning: "代入と繰り返しと条件分岐を基本とするプログラミング言語の仲間" },
+{ id: 183, term: "デバイスドライバ|デバイスドライバー|デバイスドライバープログラム", meaning: "コンピュータに接続された周辺機器を動かすためのプログラム" },
+{ id: 184, term: "デバッグ", meaning: "プログラムの間違いを除去する作業" },
+{ id: 185, term: "テレビ会議", meaning: "遠隔拠点を通信回線等で結び、音声、映像等でコミュニケーションをとることができる通信形態" },
+{ id: 186, term: "展開", meaning: "圧縮したデータを元のように戻すこと" },
+{ id: 187, term: "展示権", meaning: "著作権のうち、作品を展示する権利" },
+{ id: 188, term: "電子証明書", meaning: "信頼できる第三者(認証局)やそれに代わるシステムが個人やホスト等の真正性を電子的に証明するもの" },
+{ id: 189, term: "電子認証", meaning: "確かに本人であることを認証局が電子的に証明する技術" },
+{ id: 190, term: "電子マネー", meaning: "画像・動画・音声などのデータに情報を埋め込むことによってオリジナルかどうか判別できるる技術" },
+{ id: 191, term: "同一性保持権", meaning: "著作者人格権の一つで、作品の同一性を保持させられる権利" },
+{ id: 192, term: "動的モデル", meaning: "時間の経過に影響される部分を含むモデル" },
+{ id: 193, term: "特許権", meaning: "特許を受けた発明を独占的に実施することができる権利" },
+{ id: 194, term: "トップレベルドメイン", meaning: "ドメイン名の最後のピリオドより後ろの部分" },
+{ id: 195, term: "ドメイン名", meaning: "TCP/IPでホスト・サイトを識別する英数字の名前" },
+{ id: 196, term: "トレードオフ", meaning: "一方を立てれば他方がまずくなるといった、二つものの間の関係" },
+{ id: 197, term: "ネットショッピング", meaning: "ネットショップでの買い物" },
+{ id: 198, term: "ハードディスク|ハードディスク装置", meaning: "回転する円盤に磁気で書き込みを行う補助記憶装置" },
+{ id: 199, term: "配列の要素|配列要素", meaning: "連続して並んでいる要素の1つ" },
+{ id: 200, term: "箱ひげ図", meaning: "データのばらつき具合を示すのに用いる図で、最大・最小・第1〜3四分位数が読み取れる" },
+{ id: 201, term: "外れ値", meaning: "他の測定値から外れた値" },
+{ id: 202, term: "バックアップ", meaning: "データがあとでそっくり復元できるよう、コピーをとること" },
+{ id: 203, term: "ハブ", meaning: "LANのインタフェースからの線を集約し相互に接続する機器" },
+{ id: 204, term: "パラメータ", meaning: "モデルの中で、実際に合わせるため調整できる部分" },
+{ id: 205, term: "バリアフリー", meaning: "高齢者や障害者等が使う際の障壁を除去すること" },
+{ id: 206, term: "パリティチェック|パリティ検査", meaning: "一連のビットに全体で1の数が偶数(奇数)になるようビットを付け加え、それをチェックすること" },
+{ id: 207, term: "光の3原色|光の三原色", meaning: "RGBの3原色" },
+{ id: 208, term: "ピクセル|画素", meaning: "デジタル画像の1つの点" },
+{ id: 209, term: "ひな型|ひな形|テンプレート", meaning: "頻繁に使用するパターンをあらかじめ用意しているもの" },
+{ id: 210, term: "標本化定理", meaning: "標本化で元の信号の性質を捉えるのに必要な最低限の周波数を定める定理" },
+{ id: 211, term: "標本調査", meaning: "母集団の一部を抽出して調べる調査" },
+{ id: 212, term: "平文", meaning: "暗号化する前の、もとの文" },
+{ id: 213, term: "フールプルーフ|フール・プルーフ", meaning: "誤った操作を行っても重大な事故を招かないよう設計すること" },
+{ id: 214, term: "フェイクニュース", meaning: "正しいニュースを装った嘘の情報" },
+{ id: 215, term: "複製性", meaning: "情報の、複製が容易であるという性質" },
+{ id: 216, term: "物理的モデル", meaning: "実物を模したモデル" },
+{ id: 217, term: "プライバシー", meaning: "他人に知られたくない個人の私事" },
+{ id: 218, term: "プライベートIPアドレス|プライベートアドレス", meaning: "局所的な通信にのみ使用し、自由に割り当てられるIPアドレス" },
+{ id: 219, term: "ブラックリスト方式", meaning: "フィルタリングで、制限すべきサイトをリストアップする方式" },
+{ id: 220, term: "フラッシュメモリ", meaning: "電源を切っても内容が保持される半導体メモリ" },
+{ id: 221, term: "プランニングシート", meaning: "計画を、図、写真、説明などを配置してまとめたもの" },
+{ id: 222, term: "ブレインストーミング|ブレーンストーミング", meaning: "アイデアを出すための話し合いで、なんでも思いついたことを言い批判はしないなどのルールがある" },
+{ id: 223, term: "ブロックチェーン", meaning: "参加者がブロックを連鎖させて保管することで一部の悪者により改ざんされない技術" },
+{ id: 224, term: "分散", meaning: "「それぞれの値から平均を引いた値の2乗」の平均値" },
+{ id: 225, term: "文書作成ソフト|文書作成ソフトウェア", meaning: "書式やフォントも含めた文書ファイルを作成・編集するソフト" },
+{ id: 226, term: "ベクター画像|ベクタ画像|ベクトル画像", meaning: "線分・曲線・矩形・円などを数式で定義して構成される画像" },
+{ id: 227, term: "偏差値", meaning: "データの値を、平均50、標準偏差10のデータに変換(標準化)した値" },
+{ id: 228, term: "待ち行列", meaning: "サービスに対して待っている人が行列を作って待つこと" },
+{ id: 229, term: "マルウェア", meaning: "害をなす意図をもって作成されたソフトウェア" },
+{ id: 230, term: "丸め|丸め誤差", meaning: "丸めの結果生まれる誤差" },
+{ id: 231, term: "名義尺度", meaning: "単なる区別のための番号付けで、数値の大小に意味はない" },
+{ id: 232, term: "メーラ|メーラー", meaning: "電子メールのクライアントプログラム" },
+{ id: 233, term: "メーリングリスト", meaning: "メールやその返信をグループの人に自動的に転送する仕組み" },
+{ id: 234, term: "メールアドレス|電子メールアドレス", meaning: "電子メールのアドレス" },
+{ id: 235, term: "メジアン|中央値", meaning: "データを昇順もしくは降順に並べた上で中央の順位に位置する値のこと" },
+{ id: 236, term: "文字コード", meaning: "文字に対して割り振った番号ないしビット列" },
+{ id: 237, term: "戻り値|返り値", meaning: "手続き(関数)が終わって呼び出し箇所に戻る際に併せて返す値" },
+{ id: 238, term: "問題", meaning: "(1) 解答を求める問い (2) 解決すべき事柄・課題" },
+{ id: 239, term: "モンテカルロ法", meaning: "乱数を用いたシミュレーションや数値計算の手法" },
+{ id: 240, term: "ユーザ定義関数", meaning: "ユーザが必要に応じて定義する関数" },
+{ id: 241, term: "ライブラリ", meaning: "特定目的のため用意された手続き(関数)の集まり" },
+{ id: 242, term: "ラスタ形式", meaning: "画素が集まって構成される画像形式" },
+{ id: 243, term: "乱数", meaning: "ランダムな性質を持つ一連の数" },
+{ id: 244, term: "リハーサル", meaning: "プレゼンテーションなどの準備として同じスライドや時間で練習すること" },
+{ id: 245, term: "ルーティング", meaning: "パケットを正しい方向に送ること" },
+{ id: 246, term: "ルーティングテーブル", meaning: "パケットを正しい方向に送るために使用する表" },
+{ id: 247, term: "ルーブリック", meaning: "評価の観点(規準)と、その尺度を数段階に分けて記述語で示した評価基準とで構成される学習達成度評価（評価の基準から構成→評価基準とで構成[筧]）" },
+{ id: 248, term: "レイアウト", meaning: "2次元や3次元のものの配置" },
+{ id: 249, term: "レコード", meaning: "複数の値が組となった構造" },
+{ id: 250, term: "レジスタ", meaning: "CPU上で演算や制御のためのデータを保持する回路" },
+{ id: 251, term: "レポート", meaning: "ある事柄についてまとめた文書" },
+{ id: 252, term: "ロジックツリー", meaning: "事柄に対して、問題や原因などをツリー状に書き出して問題解決する手法" },
+{ id: 253, term: "論理演算", meaning: "入力や結果が論理値(0か1か)である演算" },
+{ id: 254, term: "論理モデル", meaning: "現象や手続きなどを扱うモデル" },
+{ id: 255, term: "ワーム", meaning: "ネット経由で自分の複製を動かし増殖させるマルウェア" },
+{ id: 256, term: "忘れられる権利", meaning: "記録にとどめられるべき正当な条件を持たない過去の個人にまつわる情報を削除する個人の権利" },
+        ];
+
+        let termsData = [];
+        let currentQuiz = { mode: '', questions: [], currentIndex: 0, correctCount: 0 };
+
+        function initApp() {
+            const saved = localStorage.getItem('term_master_data');
+            const savedData = saved ? JSON.parse(saved) : [];
+
+            // 常に initialTerms にあるものだけを表示し、成績を保存データから引き継ぐ
+            termsData = initialTerms.map(initItem => {
+                const savedItem = savedData.find(s => s.id === initItem.id);
+                if (savedItem) {
+                    return {
+                        ...initItem,
+                        correct: savedItem.correct || 0,
+                        incorrect: savedItem.incorrect || 0,
+                        encountered: savedItem.encountered || false
+                    };
+                }
+                return { ...initItem, correct: 0, incorrect: 0, encountered: false };
+            });
+
+            saveData();
+            updateStats();
+            renderList();
+        }
+
+        function saveData() {
+            localStorage.setItem('term_master_data', JSON.stringify(termsData));
+        }
+
+        function changeView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            if(viewId === 'dashboard') updateStats();
+            if(viewId === 'list') renderList();
+        }
+
+        function updateStats() {
+            const total = termsData.length;
+            const encounteredCount = termsData.filter(t => t.encountered).length;
+            const masteryCount = termsData.filter(t => t.encountered && t.correct > t.incorrect).length;
+            const encounterPct = total === 0 ? 0 : Math.round((encounteredCount / total) * 100);
+            const masteryPct = encounteredCount === 0 ? 0 : Math.round((masteryCount / encounteredCount) * 100);
+
+            document.getElementById('stat-encounter-pct').innerText = `${encounterPct}%`;
+            document.getElementById('stat-mastery-pct').innerText = `${masteryPct}%`;
+            document.getElementById('circle-encounter').style.strokeDasharray = `${encounterPct}, 100`;
+            document.getElementById('circle-mastery').style.strokeDasharray = `${masteryPct}, 100`;
+        }
+
+        function startQuiz(mode) {
+            currentQuiz.mode = mode;
+            currentQuiz.currentIndex = 0;
+            currentQuiz.correctCount = 0;
+
+            let sourceTerms = [];
+            if (mode === 'review') {
+                // 苦手克服モード：正解数が不正解数以下のもの（つまり Master 状態でないもの）
+                // かつ、一度でも遭遇しているか、少なくとも一度間違えたことがあるもの
+                sourceTerms = termsData.filter(t => (t.incorrect > 0 || t.encountered) && t.correct <= t.incorrect);
+                
+                if (sourceTerms.length === 0) {
+                    alert("現在、苦手な単語（復習が必要な単語）はありません！すべての単語をマスターしています。");
+                    return;
+                }
+            } else {
+                sourceTerms = [...termsData];
+            }
+
+            currentQuiz.questions = sourceTerms.sort(() => 0.5 - Math.random()).slice(0, 5);
+            changeView('quiz-active');
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const questionData = currentQuiz.questions[currentQuiz.currentIndex];
+            const isTermToMeaning = currentQuiz.mode !== 'meaning-to-term';
+            
+            document.getElementById('quiz-progress-text').innerText = `Q ${currentQuiz.currentIndex + 1} / ${currentQuiz.questions.length}`;
+            document.getElementById('quiz-question').innerText = isTermToMeaning ? questionData.term : questionData.meaning;
+            document.getElementById('quiz-feedback').classList.add('hidden');
+
+            const correctAnswer = isTermToMeaning ? questionData.meaning : questionData.term;
+            let otherOptions = termsData.filter(t => t.id !== questionData.id).sort(() => 0.5 - Math.random()).slice(0, 3).map(t => isTermToMeaning ? t.meaning : t.term);
+            const options = [...otherOptions, correctAnswer].sort(() => 0.5 - Math.random());
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'glass-card p-3.5 rounded-xl hover:bg-slate-700/80 transition-all text-left active-press border-white/5 text-xs sm:text-sm text-slate-200';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt, correctAnswer, questionData.id, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, correct, termId, btn) {
+            const isCorrect = selected === correct;
+            const termIndex = termsData.findIndex(t => t.id === termId);
+            termsData[termIndex].encountered = true;
+            if (isCorrect) { 
+                termsData[termIndex].correct++; 
+                currentQuiz.correctCount++; 
+            } else { 
+                termsData[termIndex].incorrect++; 
+            }
+            saveData();
+
+            btn.classList.add(isCorrect ? 'bg-emerald-500/20' : 'bg-rose-500/20');
+            btn.classList.replace('border-white/5', isCorrect ? 'border-emerald-500/50' : 'border-rose-500/50');
+
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const msgEl = document.getElementById('feedback-message');
+            feedbackEl.classList.remove('hidden');
+            msgEl.innerText = isCorrect ? "正解！" : "不正解...";
+            msgEl.className = `text-xl font-bold mb-4 ${isCorrect ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            document.querySelectorAll('#quiz-options button').forEach(b => b.disabled = true);
+        }
+
+        function nextQuestion() {
+            currentQuiz.currentIndex++;
+            if (currentQuiz.currentIndex < currentQuiz.questions.length) {
+                showQuestion();
+            } else {
+                const score = Math.round((currentQuiz.correctCount / currentQuiz.questions.length) * 100);
+                document.getElementById('quiz-question').innerHTML = `<div class="text-sky-400 text-5xl font-mono">${score}%</div><div class="text-sm mt-2">Clear!</div>`;
+                document.getElementById('quiz-options').innerHTML = '';
+                document.getElementById('quiz-feedback').innerHTML = `<button onclick="changeView('dashboard')" class="bg-sky-500 text-white px-8 py-2 rounded-xl font-bold active-press shadow-lg shadow-sky-500/20">完了</button>`;
+            }
+        }
+
+        function renderList() {
+            const tbody = document.getElementById('list-table-body');
+            const mobileContainer = document.getElementById('list-mobile-container');
+            document.getElementById('list-total-count').innerText = termsData.length;
+            tbody.innerHTML = ''; mobileContainer.innerHTML = '';
+
+            termsData.forEach(item => {
+                const badge = !item.encountered ? 'Unseen' : (item.correct > item.incorrect ? 'Master' : 'Learning');
+                const badgeColor = badge === 'Unseen' ? 'slate' : (badge === 'Master' ? 'emerald' : 'amber');
+                const badgeHtml = `<span class="px-2 py-0.5 bg-${badgeColor}-500/10 text-${badgeColor}-400 text-[8px] font-bold uppercase rounded border border-${badgeColor}-500/20">${badge}</span>`;
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-white/5 transition-colors";
+                row.innerHTML = `<td class="py-3 px-4 font-bold text-slate-200 text-xs">${item.term}</td><td class="py-3 px-4 text-[11px] text-slate-400">${item.meaning}</td><td class="py-3 px-4 text-center text-[10px] font-mono"><span class="text-emerald-400">${item.correct}</span>/<span class="text-rose-400">${item.incorrect}</span></td><td class="py-3 px-4 text-right">${badgeHtml}</td>`;
+                tbody.appendChild(row);
+
+                const card = document.createElement('div');
+                card.className = "glass-card p-4 rounded-xl border border-white/5";
+                card.innerHTML = `<div class="flex justify-between items-start mb-2"><h3 class="font-bold text-sky-400">${item.term}</h3>${badgeHtml}</div><p class="text-xs text-slate-400 mb-2">${item.meaning}</p><div class="text-[9px] text-slate-500 uppercase">Correct: ${item.correct} / Incorrect: ${item.incorrect}</div>`;
+                mobileContainer.appendChild(card);
+            });
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
